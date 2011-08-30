@@ -42,8 +42,6 @@ function Animate(context, fps){
     this.addDraw = function(func){
         if(typeof(this.draw) == "function" && drawFuncs.push){
             return drawFuncs.push({"func": func, "enabled": true});
-        }else{
-            console.log('NINE!!!');
         };
     };
 
