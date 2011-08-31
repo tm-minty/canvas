@@ -5,23 +5,27 @@
 	<title></title>
     <script type="text/javascript" src="js/canvas.js"></script>
     <script type="text/javascript">
+        function getRandomInt(min, max){
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
         function init(){
             canvas = document.getElementById("demo");
             canvas.width = document.width;
             canvas.height = document.height;
-            demo = new Canvas(canvas);
+            demo = new Canvas(canvas, 30);
+            demo.animate.showFPS = true;
 
-            rect = new demo.draw.Rectangle(20, 20, 40, 40, "#F00", "#00F");
+            rect = [];
+            for(var i = 0; i < 5000; i++ ){
+                rect[i] = new demo.draw.Rectangle(canvas.width/2 + getRandomInt(-20, 20), canvas.height/2 + getRandomInt(-20, 20), 2, 2, "rgba(0, 0, 0, 0.1)").draw();
+                demo.animate.addDraw((function(rect){ return function(){
+                    rect.x += getRandomInt(-2, 2);
+                    rect.y += getRandomInt(-2, 2);
+                    rect.draw();
+                }})(rect[i]));
+            };
 
-            /*demo.animate.addDraw(function(){
-                rect.x = rect.x + 1;
-                rect.draw();
-            });
-            demo.animate.addDraw(function(){
-                rect.y = rect.y + 1;
-                rect.draw();
-            });*/
-            demo.animate.play();
+            //demo.animate.play();
         }
     </script>
     <style type="text/css">

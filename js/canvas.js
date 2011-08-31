@@ -65,7 +65,7 @@ function Animate(context, fps){
     // Animation step
     this.step = function(){
         this.context.clear();
-        for( i in drawFuncs ){
+        for( var i in drawFuncs ){
             if( drawFuncs[i].enabled ){
                 drawFuncs[i].func();
             };
@@ -75,6 +75,7 @@ function Animate(context, fps){
 
     // Stop animation function
     this.stop = function(){
+        clearInterval(this.fpsCounter);
         clearInterval(this.interval);
     };
 
@@ -107,7 +108,9 @@ function Draw(context){
             context.fillRect(this.x, this.y, this.width, this.height);
             context.strokeStyle = this.stroke;
             context.lineWidth = this.strokeWidth;
-            context.strokeRect(this.x, this.y, this.width, this.height);
+            if( this.stroke && this.strokeWidth ){
+                context.strokeRect(this.x, this.y, this.width, this.height);
+            };
         });
         context.extended.objects.push(shape);
         return shape;
@@ -137,3 +140,9 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
         };
     };
 };
+
+// Point
+function Point(x, y){
+    this.x = x;
+    this.y = y;
+}
