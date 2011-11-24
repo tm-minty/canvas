@@ -13,19 +13,50 @@
             canvas.width = document.width;
             canvas.height = document.height;
             demo = new Canvas(canvas, 30);
-            demo.animate.showFPS = true;
+            //demo.animate.showFPS = true;
 
+
+            /* aa
             rect = [];
-            for(var i = 0; i < 5000; i++ ){
-                rect[i] = new demo.draw.Rectangle(canvas.width/2 + getRandomInt(-20, 20), canvas.height/2 + getRandomInt(-20, 20), 2, 2, "rgba(0, 0, 0, 0.1)").draw();
-                demo.animate.addDraw((function(rect){ return function(){
+            for(var i = 0; i < 200; i++ ){
+                var color = getRandomInt(0, 255);
+                rect[i] = new demo.draw.Rectangle(canvas.width/2 + getRandomInt(-20, 20), canvas.height/2 + getRandomInt(-20, 20), 3, 3, "rgba(" + color + ", " + color + ", " + color + ", 1)").draw().bind('click', function(){ console.log('blea'); });
+                demo.animate.addDraw((function(rect, rects){ return function(){
+                    if( typeof(rect.lifetime) == 'undefined' ){
+                        rect.lifetime = 0;
+                    }
+                    rect.lifetime++;
+                    if( rect.lifetime % 30 == 0 ){
+                        var i = rects.length
+                        rects[i] = new demo.draw.Rectangle( rect.x, rect.y, rect.width, rect.height, rect.fill);
+                    }
                     rect.x += getRandomInt(-2, 2);
                     rect.y += getRandomInt(-2, 2);
                     rect.draw();
-                }})(rect[i]));
+                }})(rect[i], rect));
             };
+            */
+            /* event bind test
+            var rect = new demo.draw.Rectangle(
+                    canvas.width/2 - 40, canvas.height/2 - 40, // position: center
+                    80, 80, // size
+                    "rgba(" + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ", 1)" // color
 
-            demo.animate.play();
+                    ).draw().bind('click', function(){ console.log('blea'); });
+            */
+
+            //demo.animate.play();
+
+            for( var i = 0; i < canvas.width*10; i++ ){
+                var x = i/30;
+                var y = Math.sin(i)*100;
+                var rect = new demo.draw.Rectangle(
+                    x, y + canvas.height/2 - 40, // position: center
+                    1, 1,
+                    'rgba( 255, 0, 0, 1 )'
+                ).draw();
+
+            }
         }
     </script>
     <style type="text/css">

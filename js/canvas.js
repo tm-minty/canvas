@@ -1,7 +1,10 @@
 // Canvas object
 function Canvas(context, fps){
     if(context && context.getContext){
+        this.DOMelement = context;
         this.context = context.getContext("2d");
+        this.DOMelement.context = this.context;
+        this.DOMelement.context.extended = this;
     }else{
         return false;
     };
@@ -14,6 +17,36 @@ function Canvas(context, fps){
     this.draw = new Draw(this.context);
     this.objects = [];
     
+
+    // Event listeners
+    this.handlerTypes = { 
+         mousemove: 'mouseEvent'
+        ,click: 'mouseEvent'
+    };
+
+    var handler =  function(e){
+        var objects = e.target.context.extended.objects;
+        for( var i = 0; i < objects.length; i++ ){
+            var object = objects[i];
+            if( typeof( object.events[e.type] ) == "function" ){
+                if( typeof(e.target.context.extended.handlerTypes[e.type]) != 'undefined' &&
+                    e.target.context.extended.handlerTypes[e.type] == 'mouseEvent' &&
+
+                    e.clientX >= object.x && e.clientX <= object.x + object.width &&
+                    e.clientY >= object.y && e.clientY <= object.y + object.height ){
+                    object.events[e.type]();
+                };
+            };
+        };
+    };
+
+    for( i in this.handlerTypes ){
+        if (typeof this.DOMelement.addEventListener != 'undefined')
+            this.DOMelement.addEventListener(i, handler, false);
+        else if (typeof this.DOMelement.attachEvent != 'undefined')
+            this.DOMelement.attachEvent('on' + i, handler);
+    };
+
     // Clear canvas function
     this.context.clear = function(){
         this.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -21,6 +54,8 @@ function Canvas(context, fps){
 
     // Declare link to Canvas object in canvas context object
     this.context.extended = this;
+
+    return this;
 };
 
 // Animation object
@@ -34,6 +69,10 @@ function Animate(context, fps){
     var fpsCount = 0; // Animation FPS counter / private
     var fpsCounter; // Animation FPS counter interval / private
     var drawFuncs = []; // Array of animation functions / private
+
+    this.getDraws = function(){
+        return this.drawFuncs;
+    }
 
     // Draw frame function
     this.draw = function(){};
@@ -94,6 +133,8 @@ function Animate(context, fps){
         this.fpsCount = 0;
         if( this.showFPS ){ console.log(this.currentFPS); };
     };
+
+    return this;
 };
 
 // Draw object
@@ -115,6 +156,8 @@ function Draw(context){
         context.extended.objects.push(shape);
         return shape;
     };
+
+    return this;
 };
 
 // Universal shape object
@@ -128,6 +171,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.stroke = stroke;
     this.strokeWidth = strokeWidth;
     this.drawFuncs = [];
+    this.events = {};
 
     // Draw shape function
     this.draw = function(){};
@@ -135,14 +179,25 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     // Draw shape function setter
     this.setDraw = function(func){
         if(typeof(this.draw) == "function"){
-            this.draw = func;
+            this.draw = function(){ func.call(this, arguments); return this; };
             this.drawFuncs.push(context.extended.animate.addDraw((function(self){return function(){self.draw();}})(this)));
         };
+        return this;
     };
+
+    // Add event listener
+    this.bind = function( type, func ){
+        this.events[type] = func;
+        return this;
+    }
+
+    return this;
 };
 
 // Point
 function Point(x, y){
     this.x = x;
     this.y = y;
+
+    return this;
 }
