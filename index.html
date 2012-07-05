@@ -5,20 +5,62 @@
 	<title></title>
     <script type="text/javascript" src="js/canvas.js"></script>
     <script type="text/javascript">
+        var canvas;
+        var demo;
+        var _mouse = {x: 0, y: 0};
+        var _cursor = {x: 0, y: 0};
+        var objectsCountContainer;
+        var indexContainer;
+        var dotSrc = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MTI3RkIyRkZDNkExMTFFMTg2MkZCMkFDMDE0MDdFNEQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MTI3RkIzMDBDNkExMTFFMTg2MkZCMkFDMDE0MDdFNEQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDoxMjdGQjJGREM2QTExMUUxODYyRkIyQUMwMTQwN0U0RCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDoxMjdGQjJGRUM2QTExMUUxODYyRkIyQUMwMTQwN0U0RCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Puok3LIAAABFSURBVHjaYlRSUuJjYGBQBGJ5IH4IxPdZoALmQGwExOeAmIEFqsIYiO2BmBGIX7BAtZwF4v9QlQ9BgvcZIOAFzEyAAAMAJwkNO100t/8AAAAASUVORK5CYII=';
+
+        var gravity = .4;
+
         function getRandomInt(min, max){
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
         function init(){
             canvas = document.getElementById("demo");
-            canvas.width = document.width;
-            canvas.height = document.height;
-            demo = new Canvas(canvas, 30);
-            //demo.animate.showFPS = true;
+            demo = new Canvas(canvas, 60);
+            demo.animate.showFPS = true;
 
+            canvas.addEventListener('mousemove', function(e){
+                _mouse.x = e.clientX;
+                _mouse.y = e.clientY;
+            }, false);
 
-            /* aa
+            objectsCountContainer = document.getElementById('objects-count');
+            indexContainer = document.getElementById('index');
+
+            demo.animate.addDraw(function(){
+                var j = 0;
+                for( var i = demo.objects.length; i--; ){
+                    if( typeof demo.objects[i] == 'undefined' ) continue;
+                    var obj = demo.objects[i];
+                    if( obj.x <= 0 || obj.x >= canvas.width || obj.y <= 0 || obj.y >= canvas.height || obj.life == obj.lifetime ){
+                        demo.objects[obj.index].remove();
+                        continue;
+                    };
+                    obj.x += Math.sin(i) * obj.rndx;
+                    obj.y += Math.sin(i) * obj.rndy + obj.gravity;
+                    obj.gravity += gravity;
+                    obj.life++;
+                    j++;
+                };
+                var size = getRandomInt(1, 25);
+                var dot = new demo.draw
+                            .Image(dotSrc, _mouse.x, _mouse.y, size, size)
+                            .draw();
+                dot.rndy = getRandomInt(-3, 3);
+                dot.rndx = getRandomInt(-3, 3);
+                dot.gravity = gravity;
+                dot.lifetime = 30;
+                dot.life = 0;
+                objectsCountContainer.innerText = j;
+                _cursor = _mouse;
+            });
+/*
             rect = [];
-            for(var i = 0; i < 200; i++ ){
+            for(var i = 0; i < 2000; i++ ){
                 var color = getRandomInt(0, 255);
                 rect[i] = new demo.draw.Rectangle(canvas.width/2 + getRandomInt(-20, 20), canvas.height/2 + getRandomInt(-20, 20), 3, 3, "rgba(" + color + ", " + color + ", " + color + ", 1)").draw().bind('click', function(){ console.log('blea'); });
                 demo.animate.addDraw((function(rect, rects){ return function(){
@@ -28,7 +70,7 @@
                     rect.lifetime++;
                     if( rect.lifetime % 30 == 0 ){
                         var i = rects.length
-                        rects[i] = new demo.draw.Rectangle( rect.x, rect.y, rect.width, rect.height, rect.fill);
+                        //rects[i] = new demo.draw.Rectangle( rect.x, rect.y, rect.width, rect.height, rect.fill);
                     }
                     rect.x += getRandomInt(-2, 2);
                     rect.y += getRandomInt(-2, 2);
@@ -45,28 +87,22 @@
                     ).draw().bind('click', function(){ console.log('blea'); });
             */
 
-            //demo.animate.play();
+            demo.animate.play();
 
-            for( var i = 0; i < canvas.width*10; i++ ){
-                var x = i/30;
-                var y = Math.sin(i)*100;
-                var rect = new demo.draw.Rectangle(
-                    x, y + canvas.height/2 - 40, // position: center
-                    1, 1,
-                    'rgba( 255, 0, 0, 1 )'
-                ).draw();
-
-            }
         }
     </script>
     <style type="text/css">
         html, body{min-height: 100%; height: 100%; margin: 0; padding: 0;}
+        canvas{border: 1px solid #CCC;}
     </style>
 </head>
 <body>
-    <canvas id="demo">
+    <canvas id="demo" width="800" height="500">
         Update your browser.
     </canvas>
+    <div id="fps"></div>
+    <div id="objects-count"></div>
+    <div id="index"></div>
     <script type="text/javascript">init();</script>
 </body>
 </html>

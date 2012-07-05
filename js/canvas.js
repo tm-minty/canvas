@@ -27,6 +27,7 @@ function Canvas(context, fps){
     var handler =  function(e){
         var objects = e.target.context.extended.objects;
         for( var i = 0; i < objects.length; i++ ){
+            if( typeof objects[i] == 'undefined' ) continue;
             var object = objects[i];
             if( typeof( object.events[e.type] ) == "function" ){
                 if( typeof(e.target.context.extended.handlerTypes[e.type]) != 'undefined' &&
@@ -58,7 +59,7 @@ function Canvas(context, fps){
     return this;
 };
 
-// Animation object
+// Object animation
 function Animate(context, fps){
     this.context = context; // Canvas context
     this.fps = fps; // Animation FPS
@@ -86,8 +87,8 @@ function Animate(context, fps){
 
     // Disable draw frame function
     this.disableDraw = function(i){
-        if( this.drawFuncs[i] ){
-            this.drawFuncs[i].enabled = false;
+        if( drawFuncs[i] ){
+            drawFuncs[i].enabled = false;
             return true;
         }else{
             return false;
@@ -96,9 +97,10 @@ function Animate(context, fps){
 
     // Remove draw frame function
     this.removeDraw = function(i){
-        if( this.drawFuncs[i] ){
-            delete this.drawFuncs[i];
+        if( typeof drawFuncs[i] != 'undefined' ){
+            delete drawFuncs[i];
         };
+        return this;
     };
 
     // Animation step
@@ -128,10 +130,17 @@ function Animate(context, fps){
     };
 
     // Count FPS function
+    this.fpsContainer = document.getElementById('fps');
     this.countFPS = function(){
         this.currentFPS = this.fpsCount;
         this.fpsCount = 0;
-        if( this.showFPS ){ console.log(this.currentFPS); };
+        var j = 0;
+        for( var i = drawFuncs.length; i--; ){
+            if( typeof drawFuncs[i] != 'undefined' ){
+                j++;
+            };
+        };
+        if( this.showFPS ){ this.fpsContainer.innerText = this.currentFPS + " __ " + j; }; //console.log(this.currentFPS); };
     };
 
     return this;
@@ -154,8 +163,25 @@ function Draw(context){
             };
         });
         context.extended.objects.push(shape);
+        shape.index = context.extended.objects.length - 1;
         return shape;
     };
+    this.Image = function(src, x, y, width, height){
+        //width = width || 1;
+        //height = height || 1;
+        var shape = new Shape(context, x, y, width, height);
+        var image = new Image();
+        image.src = src;
+        shape.setDraw((function(img){
+            return function(){
+                context.drawImage(img, this.x, this.y);
+            };
+        })(image));
+        context.extended.objects.push(shape);
+        shape.index = context.extended.objects.length - 1;
+        return shape;
+    };
+
 
     return this;
 };
@@ -172,6 +198,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.strokeWidth = strokeWidth;
     this.drawFuncs = [];
     this.events = {};
+    this.index = 0;
 
     // Draw shape function
     this.draw = function(){};
@@ -180,7 +207,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.setDraw = function(func){
         if(typeof(this.draw) == "function"){
             this.draw = function(){ func.call(this, arguments); return this; };
-            this.drawFuncs.push(context.extended.animate.addDraw((function(self){return function(){self.draw();}})(this)));
+            this.drawFuncs.push(this.context.extended.animate.addDraw((function(self){return function(){self.draw();}})(this)));
         };
         return this;
     };
@@ -189,7 +216,16 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.bind = function( type, func ){
         this.events[type] = func;
         return this;
-    }
+    };
+
+    // Remove shape
+    this.remove = function(){
+        delete this.context.extended.objects[this.index];
+        for( var i = this.drawFuncs.length; i--; ){
+            this.context.extended.animate.removeDraw( this.drawFuncs[i] );
+        };
+        return true;
+    };
 
     return this;
 };
