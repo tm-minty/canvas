@@ -1,5 +1,30 @@
+ var requestAnimationFrame = (function(){
+      return  window.requestAnimationFrame       || 
+              window.webkitRequestAnimationFrame || 
+              window.mozRequestAnimationFrame    || 
+              window.oRequestAnimationFrame      || 
+              window.msRequestAnimationFrame     || 
+              function( callback ){
+                  if( !window.rafCanceled ){
+                    window.setTimeout(callback, 1000 / 60);
+                  }
+                  window.rafCanceled = false;
+              };
+})();
+
+var cancelAnimationFrame = (function(){
+    return window.cancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.oCancelAnimationFrame ||
+    window.msAnimationFrame ||
+    function(){
+        window.rafCanceled = true;
+    };
+})();
+
 // Canvas object
-function Canvas(context, fps){
+function Canvas(context){
     if(context && context.getContext){
         this.DOMelement = context;
         this.context = context.getContext("2d");
@@ -8,12 +33,7 @@ function Canvas(context, fps){
     }else{
         return false;
     };
-    if( fps ){
-        this.fps = fps;
-    }else{
-        this.fps = 30;
-    };
-    this.animate = new Animate(this.context, this.fps);
+    this.animate = new Animate(this.context);
     this.draw = new Draw(this.context);
     this.objects = [];
     
@@ -50,7 +70,7 @@ function Canvas(context, fps){
 
     // Clear canvas function
     this.context.clear = function(){
-        this.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clearRect(-10, -10, this.canvas.width+10, this.canvas.height+10);
     };
 
     // Declare link to Canvas object in canvas context object
@@ -60,35 +80,28 @@ function Canvas(context, fps){
 };
 
 // Object animation
-function Animate(context, fps){
-    this.context = context; // Canvas context
-    this.fps = fps; // Animation FPS
-    this.currentFPS = 0; // Animation FPS counter current value 
-    this.showFPS = false;
+function Animate(context){
+    this.context = context;     // Canvas context
+    this.drawFuncs = [];     // Array of animation functions / private
+    this.drawTime = 0;
 
-    var interval; // Animation interval / private
-    var fpsCount = 0; // Animation FPS counter / private
-    var fpsCounter; // Animation FPS counter interval / private
-    var drawFuncs = []; // Array of animation functions / private
+    var stoped = false;     // Stop flag
 
     this.getDraws = function(){
-        return this.drawFuncs;
+        return drawFuncs;
     }
-
-    // Draw frame function
-    this.draw = function(){};
 
     // Draw frame function setter
     this.addDraw = function(func){
-        if(typeof(this.draw) == "function" && drawFuncs.push){
-            return drawFuncs.push({"func": func, "enabled": true});
+        if(typeof(this.draw) == "function" && this.drawFuncs.push){
+            return this.drawFuncs.push({"func": func, "enabled": true});
         };
     };
 
     // Disable draw frame function
     this.disableDraw = function(i){
-        if( drawFuncs[i] ){
-            drawFuncs[i].enabled = false;
+        if( this.drawFuncs[i] ){
+            this.drawFuncs[i].enabled = false;
             return true;
         }else{
             return false;
@@ -97,50 +110,62 @@ function Animate(context, fps){
 
     // Remove draw frame function
     this.removeDraw = function(i){
-        if( typeof drawFuncs[i] != 'undefined' ){
-            delete drawFuncs[i];
+        if( typeof this.drawFuncs[i] != 'undefined' ){
+            delete this.drawFuncs[i];
         };
         return this;
     };
 
     // Animation step
-    this.step = function(){
+    this.draw = function(){
         this.context.clear();
-        for( var i in drawFuncs ){
-            if( drawFuncs[i].enabled ){
-                drawFuncs[i].func();
+
+        var currentTime = (new Date() - 0),
+            delta = currentTime - this.drawTime;
+        
+        for( var i in this.drawFuncs ){
+            if( this.drawFuncs[i].enabled ){
+                this.drawFuncs[i].func(delta);
             };
         };
-        this.fpsCount++;
+
+        this.drawTime = (new Date() - 0);
+    };
+
+    this.step = function(){
+        if( !stoped ){
+            var self = this;
+            requestAnimationFrame(function(){ self.step(); });
+            this.draw();
+        }
     };
 
     // Stop animation function
     this.stop = function(){
-        clearInterval(this.fpsCounter);
-        clearInterval(this.interval);
+        stoped = true;
+    };
+
+    // Toggle play function
+    this.togglePlay = function(){
+        stoped = !stoped;
+        if( this.drawTime == 0 && !stoped ){
+            this.drawTime = (new Date() - 0);
+        }
+        this.step();
     };
 
     // Start animation function
     this.play = function(){
+        if( this.drawTime == 0 ){
+            this.drawTime = (new Date() - 0);
+        }
         if(typeof(this.draw) == "function"){
             this.draw();
         };
-        this.fpsCounter = setInterval((function(self){return function(){ self.countFPS(); }})(this), 1000)
-        this.interval = setInterval((function(self){ return function(){ self.step(); }})(this), 1000 / this.fps);
-    };
 
-    // Count FPS function
-    this.fpsContainer = document.getElementById('fps');
-    this.countFPS = function(){
-        this.currentFPS = this.fpsCount;
-        this.fpsCount = 0;
-        var j = 0;
-        for( var i = drawFuncs.length; i--; ){
-            if( typeof drawFuncs[i] != 'undefined' ){
-                j++;
-            };
-        };
-        if( this.showFPS ){ this.fpsContainer.innerText = this.currentFPS + " __ " + j; }; //console.log(this.currentFPS); };
+        stoped = false;
+
+        this.step();
     };
 
     return this;
@@ -199,6 +224,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.drawFuncs = [];
     this.events = {};
     this.index = 0;
+    this.createTime = (new Date() - 0);
 
     // Draw shape function
     this.draw = function(){};
@@ -218,12 +244,19 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
         return this;
     };
 
+    // Disable draws
+    this.disable = function(){
+        for( var i = this.drawFuncs.length; i--; ){
+            this.context.extended.animate.disableDraw( this.drawFuncs[i] );
+        };
+    }
+
     // Remove shape
     this.remove = function(){
-        delete this.context.extended.objects[this.index];
         for( var i = this.drawFuncs.length; i--; ){
             this.context.extended.animate.removeDraw( this.drawFuncs[i] );
         };
+        delete this.context.extended.objects[this.index];
         return true;
     };
 
