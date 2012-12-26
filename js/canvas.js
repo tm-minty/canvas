@@ -55,7 +55,7 @@ function Canvas(context){
 
                     e.clientX >= object.x && e.clientX <= object.x + object.width &&
                     e.clientY >= object.y && e.clientY <= object.y + object.height ){
-                    object.events[e.type]();
+                    object.events[e.type].call(object, e);
                 };
             };
         };
@@ -130,7 +130,7 @@ function Animate(context){
         for( var i in this.context.extended.objects ){
             var obj = this.context.extended.objects[i];
             if( typeof obj != 'undefined' ){
-                obj.draw(delta);
+                obj.render(delta);
             }
         }
 
@@ -174,7 +174,7 @@ function Draw(context){
         var shape = new Shape(context, x, y, width, height, fill, stroke, strokeWidth);
         shape.setDraw(function(){
             context.fillStyle = this.fill;
-            context.fillRect(this.x, this.y, this.width, this.height);
+            context.fillRect(this.alignDisplace.x, this.alignDisplace.y, this.width, this.height);
             context.strokeStyle = this.stroke;
             context.lineWidth = this.strokeWidth;
             if( this.stroke && this.strokeWidth ){
@@ -193,7 +193,7 @@ function Draw(context){
         image.src = src;
         shape.setDraw((function(img){
             return function(){
-                context.drawImage(img, this.x, this.y);
+                context.drawImage(img, this.alignDisplace.x, this.alignDisplace.y);
             };
         })(image));
         context.extended.objects.push(shape);
@@ -210,23 +210,42 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.context = context;
     this.x = x;
     this.y = y;
+    this.alignDisplace = {
+        x: 0,
+        y: 0
+    };
     this.width = width;
     this.height = height;
     this.fill = fill;
     this.stroke = stroke;
     this.strokeWidth = strokeWidth;
+    this.rotation = 0;
+    this.scaleValues = {
+        x: 1,
+        y: 1
+    };
     this.drawFuncs = [];
     this.events = {};
     this.createTime = Date.now();
 
     // Draw shape function
     this.draw = function(){};
+
+    // Draw function wrapper
+    this.render = function(){
+        this.context.save();
+        this.context.translate(this.x, this.y);
+        this.context.rotate( this.rotation * (Math.PI/180) );
+        this.context.scale(this.scaleValues.x, this.scaleValues.y);
+        this.draw();
+        context.restore();
+    };
     
     // Draw shape function setter
     this.setDraw = function(func){
         if(typeof(this.draw) == "function"){
             this.draw = function(){ func.call(this, arguments); return this; };
-            this.drawFuncs.push((function(self){return function(){self.draw();}})(this));
+            this.drawFuncs.push((function(self){return function(){self.render();}})(this));
         };
         return this;
     };
@@ -252,6 +271,53 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
         this.context.extended.objects.splice(this.context.extended.objects.indexOf(this), 1);
         return true;
     };
+
+    // Change alignment
+    this.align = function(a){
+        if( typeof a == "string"){
+            if( a == "center" ){
+                this.alignDisplace.x = this.width/2 * -1;
+                this.alignDisplace.y = this.height/2 * -1;
+            }else if( a == "left" ){
+                this.alignDisplace.x = 0;
+                this.alignDisplace.y = 0
+            }else if( a == "right" ){
+                this.alignDisplace.x = this.width * -1;
+                this.alignDisplace.y = 0;
+            }
+        }else if( typeof a == "object" && a.length && a.length == 2 ){
+            this.alignDisplace.x = this.width/100*a[0] * -1;
+            this.alignDisplace.y = this.height/100*a[1] * -1;
+        }else if( typeof a == "function" ){
+            a.apply(this);
+        };
+        return this;
+    };
+
+    // Set rotation // in degrees
+    this.setRotation = function(d){
+        this.rotation = d;
+        return this;
+    }
+
+    // Rotate // in degrees
+    this.rotate = function(d){
+        this.rotation += d;
+        return this;
+    }
+
+    this.setScale = function(x, y){
+        this.scaleValues.x = x || this.scaleValues.x;
+        this.scaleValues.y = y || this.scaleValues.y;
+        return this;
+    }
+
+    // Scale
+    this.scale = function(x, y){
+        this.scaleValues.x = this.scaleValues.x + x || this.scaleValues.x;
+        this.scaleValues.y = this.scaleValues.y + y || this.scaleValues.y;
+        return this;
+    }
 
     return this;
 };
