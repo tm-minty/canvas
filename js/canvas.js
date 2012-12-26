@@ -88,7 +88,7 @@ function Animate(context){
     var stoped = false;     // Stop flag
 
     this.getDraws = function(){
-        return drawFuncs;
+        return this.drawFuncs;
     }
 
     // Draw frame function setter
@@ -117,11 +117,9 @@ function Animate(context){
     };
 
     // Animation step
-    this.draw = function(){
+    this.draw = function(timestamp){
         this.context.clear();
-
-        var currentTime = (new Date() - 0),
-            delta = currentTime - this.drawTime;
+        var delta = timestamp - this.drawTime;
 
         for( var i in this.drawFuncs ){
             if( this.drawFuncs[i].enabled ){
@@ -132,18 +130,18 @@ function Animate(context){
         for( var i in this.context.extended.objects ){
             var obj = this.context.extended.objects[i];
             if( typeof obj != 'undefined' ){
-                obj.draw();
+                obj.draw(delta);
             }
         }
 
-        this.drawTime = (new Date() - 0);
+        this.drawTime = timestamp;
     };
 
-    this.step = function(){
+    this.step = function(timestamp){
         if( !stoped ){
             var self = this;
-            requestAnimationFrame(function(){ self.step(); });
-            this.draw();
+            requestAnimationFrame(function(timestamp){ self.step(timestamp); });
+            this.draw(timestamp);
         }
     };
 
@@ -155,24 +153,13 @@ function Animate(context){
     // Toggle play function
     this.togglePlay = function(){
         stoped = !stoped;
-        if( this.drawTime == 0 && !stoped ){
-            this.drawTime = (new Date() - 0);
-        }
-        this.step();
+        this.step(1);
     };
 
     // Start animation function
     this.play = function(){
-        if( this.drawTime == 0 ){
-            this.drawTime = (new Date() - 0);
-        }
-        if(typeof(this.draw) == "function"){
-            this.draw();
-        };
-
         stoped = false;
-
-        this.step();
+        this.step(1);
     };
 
     return this;
@@ -230,7 +217,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.strokeWidth = strokeWidth;
     this.drawFuncs = [];
     this.events = {};
-    this.createTime = (new Date() - 0);
+    this.createTime = Date.now();
 
     // Draw shape function
     this.draw = function(){};
