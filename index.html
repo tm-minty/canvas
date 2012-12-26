@@ -38,36 +38,30 @@
             indexContainer = document.getElementById('index');
 
             demo.animate.addDraw(function(delta){
-                var j = 0;
                 for( var i = demo.objects.length; i--; ){
                     if( typeof demo.objects[i] == 'undefined' ) continue;
                     var obj = demo.objects[i];
-                    if( obj.x <= 0 || obj.x >= canvas.width || obj.y <= 0 || obj.y >= canvas.height ){
-                        obj.disable();
-                    };
-                    if( obj.life == obj.lifetime ){
+                    if( obj.x <= 0 || obj.x >= canvas.width || obj.y <= 0 || obj.y >= canvas.height || obj.life == obj.lifetime ){
                         obj.remove();
                         continue;
                     };
-                    obj.x += Math.sin(i) * obj.rndx;
-                    obj.y += Math.sin(i) * obj.rndy + obj.gravity;
-                    obj.gravity += ( (CONST.M * CONST.G) * delta) / 1000;
+                    obj.x += Math.sin(5) * obj.rndx;
+                    obj.y += Math.sin(5) * obj.rndy + obj.gravity;
+                    obj.gravity += .4;
                     obj.life++;
-                    j++;
                 };
                 var size = getRandomInt(1, 25);
-                for(var ic = 20; ic--;){
+                for(var ic = 1; ic--;){
                     var dot = new demo.draw
                                 .Image(dotSrc, _mouse.x, _mouse.y, size, size)
                                 .draw();
                     dot.rndy = getRandomInt(-3, 3);
                     dot.rndx = getRandomInt(-3, 3);
                     dot.weight = getRandomInt(3,7);
-                    dot.gravity = ( (CONST.M * CONST.G) / (1000*1));
-                    dot.lifetime = 20;
+                    dot.gravity = .4;
+                    dot.lifetime = 30;
                     dot.life = 0;
                 }
-                objectsCountContainer.innerText = j;
                 _cursor = _mouse;
             });
 /*

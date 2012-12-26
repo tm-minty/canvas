@@ -122,12 +122,19 @@ function Animate(context){
 
         var currentTime = (new Date() - 0),
             delta = currentTime - this.drawTime;
-        
+
         for( var i in this.drawFuncs ){
             if( this.drawFuncs[i].enabled ){
                 this.drawFuncs[i].func(delta);
             };
         };
+
+        for( var i in this.context.extended.objects ){
+            var obj = this.context.extended.objects[i];
+            if( typeof obj != 'undefined' ){
+                obj.draw();
+            }
+        }
 
         this.drawTime = (new Date() - 0);
     };
@@ -223,7 +230,6 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.strokeWidth = strokeWidth;
     this.drawFuncs = [];
     this.events = {};
-    this.index = 0;
     this.createTime = (new Date() - 0);
 
     // Draw shape function
@@ -233,7 +239,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.setDraw = function(func){
         if(typeof(this.draw) == "function"){
             this.draw = function(){ func.call(this, arguments); return this; };
-            this.drawFuncs.push(this.context.extended.animate.addDraw((function(self){return function(){self.draw();}})(this)));
+            this.drawFuncs.push((function(self){return function(){self.draw();}})(this));
         };
         return this;
     };
@@ -256,7 +262,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
         for( var i = this.drawFuncs.length; i--; ){
             this.context.extended.animate.removeDraw( this.drawFuncs[i] );
         };
-        delete this.context.extended.objects[this.index];
+        this.context.extended.objects.splice(this.context.extended.objects.indexOf(this), 1);
         return true;
     };
 
