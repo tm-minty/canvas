@@ -4,11 +4,13 @@
 	<meta charset="UTF-8">
 	<title></title>
     <script type="text/javascript" src="js/canvas.js"></script>
+    <script type="text/javascript" src="js/keys.js"></script>
     <script type="text/javascript">
-        var canvas;
-        var demo;
-        var _mouse = {x: 0, y: 0};
-        var _cursor = {x: 0, y: 0};
+        var canvas, 
+            demo,
+            _key,
+            _mouse = {x: 0, y: 0},
+            _cursor = {x: 0, y: 0};
 
         var rect, rect2, rect3;
 
@@ -16,6 +18,7 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
         function init(){
+            _key = new Key();
             canvas = document.getElementById("demo");
             demo = new Canvas(canvas);
 
@@ -29,32 +32,30 @@
             });
 
             rect = new demo.draw.Rectangle(
-                350, 350, // Position
-                50, 50, // Size
+                300, 300, // Position
+                70, 30, // Size
                 "#F00" // Color
-                ).bind('mousemove', function(e){
-                    this.fill = "rgb(" + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ")";
-                }).align("center");
-
-            rect2 = new demo.draw.Rectangle(
-                150, 150, // Position
-                50, 50, // Size
-                "#00F" // Color
-                );
-
-            rect3 = new demo.draw.Rectangle(
-                550, 550, // Position
-                50, 50, // Size
-                "#0F0" // Color
-                ).bind('mousemove', function(e){
-                    this.fill = "rgb(" + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ", " + getRandomInt(0, 255) + ")";
-                }).draw().align([70,70]) // Align in percents [left, top]
+                ).align("center");
+            rect.speed = 5; // Movement speed / pixels per frame
+            rect.rspeed = 3; // Rotation speed / degrees per frame
             
 
             var draw = function(delta){
-                rect.rotate(5);
-                rect2.rotate(-1);
-                rect3.rotate(-3);
+                if( _key.down ){
+                    if( _key.is("left") ){ // Arrow left // 37
+                        rect.rotate(rect.rspeed*-1);
+                    }
+                    if( _key.is("right") ){ // Arrow right // 39
+                        rect.rotate(rect.rspeed);
+                    }
+                    if( _key.is("up") || _key.is("down") ){
+                        var dirAngle = rect.rotation / 180*Math.PI;
+                        var x = rect.speed * ( _key.is("down") ? -1 : 1 ) * Math.cos(dirAngle);
+                        var y = rect.speed * ( _key.is("down") ? -1 : 1 ) * Math.sin(dirAngle);
+
+                        rect.move(x, y);
+                    }
+                }
             };
 
             demo.animate.addDraw(draw);

@@ -235,8 +235,8 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.render = function(){
         this.context.save();
         this.context.translate(this.x, this.y);
-        this.context.rotate( this.rotation * (Math.PI/180) );
         this.context.scale(this.scaleValues.x, this.scaleValues.y);
+        this.context.rotate( this.rotation * (Math.PI/180) );
         this.draw();
         context.restore();
     };
@@ -306,6 +306,7 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
         return this;
     }
 
+    // Set scale
     this.setScale = function(x, y){
         this.scaleValues.x = x || this.scaleValues.x;
         this.scaleValues.y = y || this.scaleValues.y;
@@ -316,6 +317,25 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
     this.scale = function(x, y){
         this.scaleValues.x = this.scaleValues.x + x || this.scaleValues.x;
         this.scaleValues.y = this.scaleValues.y + y || this.scaleValues.y;
+        return this;
+    }
+
+    // Set position
+    this.setPosition = function(x, y){
+        this.x = x;
+        this.y = y;
+
+        return this;
+    }
+
+    // Move
+    this.move = function(x, y){
+        var x = x || 0;
+        var y = y || 0;
+
+        this.x = this.x + x;
+        this.y = this.y + y;
+
         return this;
     }
 
