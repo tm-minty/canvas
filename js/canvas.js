@@ -41,6 +41,8 @@ function Canvas(context){
     // Event listeners
     this.handlerTypes = { 
          mousemove: 'mouseEvent'
+        ,mouseout: 'mouseEvent'
+        ,mouseover: 'mouseEvent'
         ,click: 'mouseEvent'
     };
 
@@ -53,8 +55,8 @@ function Canvas(context){
                 if( typeof(e.target.context.extended.handlerTypes[e.type]) != 'undefined' &&
                     e.target.context.extended.handlerTypes[e.type] == 'mouseEvent' &&
 
-                    e.clientX >= object.x && e.clientX <= object.x + object.width &&
-                    e.clientY >= object.y && e.clientY <= object.y + object.height ){
+                    e.clientX >= object.x - window.scrollX + object.alignDisplace.x && e.clientX <= object.x - window.scrollX + object.alignDisplace.x + object.width &&
+                    e.clientY >= object.y - window.scrollY + object.alignDisplace.y && e.clientY <= object.y - window.scrollY + object.alignDisplace.y + object.height ){
                     object.events[e.type].call(object, e);
                 };
             };
@@ -322,8 +324,8 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
 
     // Set position
     this.setPosition = function(x, y){
-        this.x = x;
-        this.y = y;
+        this.x = x || this.x;
+        this.y = y || this.y;
 
         return this;
     }
@@ -346,6 +348,14 @@ function Shape(context, x, y, width, height, fill, stroke, strokeWidth){
 function Point(x, y){
     this.x = x;
     this.y = y;
+
+    // Set position
+    this.setPosition = function(x, y){
+        this.x = x || this.x;
+        this.y = y || this.y;
+
+        return this;
+    }
 
     return this;
 }

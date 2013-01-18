@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="js/canvas.js"></script>
+    <script type="text/javascript" src="js/keys.js"></script>
+    <script type="text/javascript" src="js/astar-min.js"></script>
+    <script type="text/javascript">
+        var canvas, demo, _key,
+                map = [], graph = [], closed = [];
+
+        function getRandomInt(min, max){
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function init(){
+            _key = new Key();
+            canvas = document.getElementById("demo");
+            demo = new Canvas(canvas);
+
+            // Строим сетку
+            var cellSize = 32,
+                mapSize = [30, 20];
+
+            for( var h = mapSize[1]; h--; ){ // Перебор по вертикали
+                map[h] = [];
+                graph[h] = [];
+                for( var w = mapSize[0]; w--; ){ // Перебор по горизонтали
+                    map[h][w] = {
+                        free: true,
+                        v: new demo.draw.Rectangle(
+                                w*cellSize, h*cellSize, // Position
+                                cellSize, cellSize, // Size
+                                "#CCC" // Fill
+                            )
+                    }
+                    graph[h][w] = 0;
+                }
+            }
+
+
+            var draw = function(delta){
+                var startPoint = new Point(5, 3),
+                    endPoint = new Point(23, 17);
+
+                for( var w = closed.length; w--; ){
+                    var cell = map[closed[w][1]][closed[w][0]];
+                    cell.v.free = false;
+                    cell.v.fill = "#00F";
+
+                    graph[wall[w][1]][wall[w][0]] = 1;
+                }
+
+                var g = new Graph(graph),
+                    start = g.nodes[startPoint.y][startPoint.x],
+                    end = g.nodes[endPoint.y][endPoint.x];
+
+                var result = astar.search(g.nodes, start, end);
+
+                for( var i = 0, l = result.length; i < l; i++ ){
+                    var node = result[i];
+                    map[node.x][node.y].v.fill = "#FF0";
+                }
+
+
+                map[startPoint.y][startPoint.x].v.fill = "#0F0";
+                map[endPoint.y][endPoint.x].v.fill = "#F00";
+            };
+
+            demo.animate.addDraw(draw);
+            demo.animate.play();
+
+        }
+    </script>
+    <style type="text/css">
+        html, body{min-height: 100%; height: 100%; margin: 0; padding: 0;}
+        canvas{border: 1px solid #CCC;}
+    </style>
+</head>
+<body onload="init();">
+    <canvas id="demo" width="960" height="640">
+        Update your browser.
+    </canvas>
+</body>
+</html>
